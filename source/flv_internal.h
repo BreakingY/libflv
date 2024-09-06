@@ -27,15 +27,15 @@
 
 
 // muxer
-int writeFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio);
+int writeFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio);
 int writePreviousTagSzie(uint8_t *data, uint32_t data_len, uint32_t previous_size);
-int writeTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len);
+int writeTagHeader(TagHeader *tag_header, uint8_t *data, uint32_t data_len);
 
-int writeAudioConfigTagData(flvContext *context, uint8_t *data, uint32_t data_len);
-int writeAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len);
+int writeAudioConfigTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
+int writeAudioTagData(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len);
 
-int writeVideoConfigTagData(flvContext *context, uint8_t *data, uint32_t data_len);
-int writeVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len);
+int writeVideoConfigTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
+int writeVideoTagData(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len);
 
-int writeScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len);
+int writeScriptDataTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
 #endif

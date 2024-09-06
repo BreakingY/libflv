@@ -2,13 +2,13 @@
 #include "flv_internal.h"
 #include <string.h>
 
-flvContext *createFLVContext(){
-    flvContext *context = (flvContext *)malloc(sizeof(flvContext));
-    memset(context, 0, sizeof(flvContext));
+FLVContext *createFLVContext(){
+    FLVContext *context = (FLVContext *)malloc(sizeof(FLVContext));
+    memset(context, 0, sizeof(FLVContext));
     return context;
 }
 
-void destroyFLVContext(flvContext *context){
+void destroyFLVContext(FLVContext *context){
     if(!context){
         return;
     }
@@ -31,7 +31,7 @@ void destroyFLVContext(flvContext *context){
 
     return;
 }
-void setReadCallBack(flvContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg){
+void setReadCallBack(FLVContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg){
     if(!context){
         return;
     }
@@ -41,7 +41,7 @@ void setReadCallBack(flvContext *context, AudioCallBack audio_cb, VideoCallBack 
     context->arg = arg;
     return;
 }
-void setWriteCallBack(flvContext *context, FLVWriteCallBack write_cb, void *arg){
+void setWriteCallBack(FLVContext *context, FLVWriteCallBack write_cb, void *arg){
     if(!context){
         return;
     }
@@ -49,14 +49,14 @@ void setWriteCallBack(flvContext *context, FLVWriteCallBack write_cb, void *arg)
     context->arg = arg;
     return;
 }
-void setAudioMediaType(flvContext *context, enum FLVAudioType audio_type){
+void setAudioMediaType(FLVContext *context, enum FLVAudioType audio_type){
     if(!context){
         return;
     }
     context->audio_type = audio_type;
     return;
 }
-void setVideoMediaType(flvContext *context, enum FLVVideoType video_type){
+void setVideoMediaType(FLVContext *context, enum FLVVideoType video_type){
     if(!context){
         return;
     }

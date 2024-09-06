@@ -4,7 +4,7 @@
 /**
  * muxer API
  */
-int writeFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio){
+int writeFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio){
     if(data_len < FLV_HEADER_SIZE){
         return 0;
     }
@@ -35,7 +35,7 @@ int writePreviousTagSzie(uint8_t *data, uint32_t data_len, uint32_t previous_siz
     data[3] = previous_size & 0xff;
     return FLV_PREVIOUS_SIZE;
 }
-int writeTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len){
+int writeTagHeader(TagHeader *tag_header, uint8_t *data, uint32_t data_len){
     if(data_len < FLV_TAG_HEADER_SIZE){
         return 0;
     }
@@ -68,7 +68,7 @@ int writeTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len){
     memset(data + 7, 0, 3);
     return FLV_TAG_HEADER_SIZE;
 }
-static int writeAACConfig(flvContext *context, uint8_t *data, uint32_t data_len){
+static int writeAACConfig(FLVContext *context, uint8_t *data, uint32_t data_len){
     if(data_len < 1 + 1 + 2){
         return 0;
     }
@@ -91,7 +91,7 @@ static int writeAACConfig(flvContext *context, uint8_t *data, uint32_t data_len)
     context->audio_config_ready = 1;
     return pos;
 }
-int writeAudioConfigTagData(flvContext *context, uint8_t *data, uint32_t data_len){
+int writeAudioConfigTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
     int ret = 0;
     switch (context->audio_type)
     {
@@ -103,7 +103,7 @@ int writeAudioConfigTagData(flvContext *context, uint8_t *data, uint32_t data_le
     }
     return ret;
 }
-static int writeAACData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len){
+static int writeAACData(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len){
     if(data_len < 1 + 1 + audio_data_len){
         return 0;
     }
@@ -119,7 +119,7 @@ static int writeAACData(flvContext *context, uint8_t *data, uint32_t data_len, u
     pos += audio_data_len;
     return pos;
 }
-int writeAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len){
+int writeAudioTagData(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len){
     int ret = 0;
     switch (context->audio_type)
     {
@@ -131,7 +131,7 @@ int writeAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len, uin
     }
     return ret;
 }
-static int h264WriteExtra(flvContext *context, uint8_t *data, uint32_t data_len){
+static int h264WriteExtra(FLVContext *context, uint8_t *data, uint32_t data_len){
     uint8_t *extra_data_start = data;
     uint8_t *extra_data = data;
     extra_data[0] = 0x01;
@@ -164,7 +164,7 @@ static int h264WriteExtra(flvContext *context, uint8_t *data, uint32_t data_len)
     int extra_data_size = extra_data - extra_data_start;
     return extra_data_size;
 }
-static int writeH264Config(flvContext *context, uint8_t *data, uint32_t data_len){
+static int writeH264Config(FLVContext *context, uint8_t *data, uint32_t data_len){
     memset(data, 0, data_len);
     int pos = 0;
     data[pos++] = 0x17;
@@ -178,7 +178,7 @@ static int writeH264Config(flvContext *context, uint8_t *data, uint32_t data_len
     return pos;
 
 }
-static int h265WriteExtra(flvContext *context, uint8_t *data, uint32_t data_len){
+static int h265WriteExtra(FLVContext *context, uint8_t *data, uint32_t data_len){
     int i = 0;
     unsigned char *buffer = data;
     buffer[i++] = 0x01;
@@ -256,7 +256,7 @@ static int h265WriteExtra(flvContext *context, uint8_t *data, uint32_t data_len)
     }
     return i;
 }
-static int writeH265Config(flvContext *context, uint8_t *data, uint32_t data_len){
+static int writeH265Config(FLVContext *context, uint8_t *data, uint32_t data_len){
     memset(data, 0, data_len);
     int pos = 0;
     data[pos++] = 0x1c;
@@ -269,7 +269,7 @@ static int writeH265Config(flvContext *context, uint8_t *data, uint32_t data_len
     pos += h265WriteExtra(context, data + pos, data_len - pos);
     return pos;
 }
-int writeVideoConfigTagData(flvContext *context, uint8_t *data, uint32_t data_len){
+int writeVideoConfigTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
     int ret = 0;
     switch (context->video_type)
     {
@@ -284,7 +284,7 @@ int writeVideoConfigTagData(flvContext *context, uint8_t *data, uint32_t data_le
     }
     return ret;
 }
-static int writeH264Data(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
+static int writeH264Data(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
     if(data_len < 9 + video_data_len){
         return 0;
     }
@@ -306,7 +306,7 @@ static int writeH264Data(flvContext *context, uint8_t *data, uint32_t data_len, 
     pos += video_data_len;
     return pos;
 }
-static int writeH265Data(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
+static int writeH265Data(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
     if(data_len < 9 + video_data_len){
         return 0;
     }
@@ -328,7 +328,7 @@ static int writeH265Data(flvContext *context, uint8_t *data, uint32_t data_len, 
     pos += video_data_len;
     return pos;
 }
-int writeVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
+int writeVideoTagData(FLVContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
     int ret = 0;
     switch (context->video_type)
     {
@@ -344,7 +344,7 @@ int writeVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len, uin
     return ret;
 }
 
-int writeScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len){
+int writeScriptDataTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
     memset(data, 0, data_len);
     int pos = generaString("onMetaData", strlen("onMetaData"), data, data_len);
     pos += generateMixedArray(context->dict, data + pos, data_len - pos);
@@ -353,7 +353,7 @@ int writeScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len
 }
 
 // external API
-int writeFLVGlobalHeader(flvContext *context, int have_video, int have_audio){
+int writeFLVGlobalHeader(FLVContext *context, int have_video, int have_audio){
     int ret = writeFLVHeader(&context->flv_header, context->buffer_context, sizeof(context->buffer_context), have_video, have_audio);
     if(context->write_cb){
         context->write_cb(WRITE_FLV_HEADER, context->buffer_context, ret, context->arg);
@@ -364,7 +364,7 @@ int writeFLVGlobalHeader(flvContext *context, int have_video, int have_audio){
     }
     return ret > 0 ? 0 : -1;
 }
-int writeAudioSpecificConfig(flvContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel){
+int writeAudioSpecificConfig(FLVContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel){
     context->profile = profile;
     context->sample_rate_index = sample_rate_index;
     context->channel = channel;
@@ -386,7 +386,7 @@ int writeAudioSpecificConfig(flvContext *context, int64_t timestamp, int profile
     }
     return ret > 0 ? 0 : -1;
 }
-int writeAudioData(flvContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len){
+int writeAudioData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len){
     int ret = writeAudioTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE, data, data_len);
 
     context->tag_header.flv_media_type = FLV_AUDIO;
@@ -404,7 +404,7 @@ int writeAudioData(flvContext *context, int64_t timestamp, uint8_t *data, uint32
     }
     return ret >= 0 ? 0 : -1;
 }
-int setVideoParameters(flvContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len){
+int setVideoParameters(FLVContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len){
     int ret = 1;
     if(vps){
         context->vps[context->vps_num] = (uint8_t*)malloc(vps_len);
@@ -426,7 +426,7 @@ int setVideoParameters(flvContext *context, uint8_t *vps, uint32_t vps_len, uint
     }
     return ret > 0 ? 0 : -1;
 }
-int writeVideoSpecificConfig(flvContext *context, int64_t timestamp){
+int writeVideoSpecificConfig(FLVContext *context, int64_t timestamp){
     int ret = writeVideoConfigTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE);
 
     context->tag_header.flv_media_type = FLV_VIDEO;
@@ -444,7 +444,7 @@ int writeVideoSpecificConfig(flvContext *context, int64_t timestamp){
     }
     return ret > 0 ? 0 : -1;
 }
-int writeVideoData(flvContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len){
+int writeVideoData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len){
     int ret = writeVideoTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE, data, data_len);
 
     context->tag_header.flv_media_type = FLV_VIDEO;
@@ -462,7 +462,7 @@ int writeVideoData(flvContext *context, int64_t timestamp, uint8_t *data, uint32
     }
     return ret > 0 ? 0 : -1;
 }
-int writeScriptData(flvContext *context, int64_t timestamp, AMFDict dict){
+int writeScriptData(FLVContext *context, int64_t timestamp, AMFDict dict){
     context->dict = dict;
     int ret = writeScriptDataTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE);
 

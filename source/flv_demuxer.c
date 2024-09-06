@@ -5,7 +5,7 @@
 /**
  * demuxer API
  */
-int readFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len){
+int readFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len){
     if(data_len < FLV_HEADER_SIZE){
         return 0;
     }
@@ -26,7 +26,7 @@ int readPreviousTagSzie(uint8_t *data, uint32_t data_len){
     }
     return FLV_PREVIOUS_SIZE;
 }
-int readTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len){
+int readTagHeader(TagHeader *tag_header, uint8_t *data, uint32_t data_len){
     if(data_len < FLV_TAG_HEADER_SIZE){
         return 0;
     }
@@ -51,7 +51,7 @@ int readTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len){
     tag_header->stream_id = (data[8] << 16) | (data[9] << 8) | data[10]; // always 0
     return FLV_TAG_HEADER_SIZE;
 }
-static int readAACData(flvContext *context, uint8_t *data, uint32_t data_len){
+static int readAACData(FLVContext *context, uint8_t *data, uint32_t data_len){
     if(data_len < 1){
         return -1;
     }
@@ -70,7 +70,7 @@ static int readAACData(flvContext *context, uint8_t *data, uint32_t data_len){
     }
     return data_len;
 }
-int readAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len){
+int readAudioTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
     int sound_fromat = (data[0] & 0xf0) >> 4;
     int sound_rate = (data[0] & 0x0c) >> 2;
     int sound_size = (data[0] & 0x02) >> 1;
@@ -89,7 +89,7 @@ int readAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len){
     return ret > 0 ? data_len : 0;
 }
 
-static int readH264Data(flvContext *context, uint8_t *data, uint32_t data_len){
+static int readH264Data(FLVContext *context, uint8_t *data, uint32_t data_len){
     if(data_len < 4){
         return -1;
     }
@@ -156,7 +156,7 @@ static int readH264Data(flvContext *context, uint8_t *data, uint32_t data_len){
     }
     return data_len;
 }
-static int readH265Data(flvContext *context, uint8_t *data, uint32_t data_len){
+static int readH265Data(FLVContext *context, uint8_t *data, uint32_t data_len){
     if(data_len < 4){
         return -1;
     }
@@ -249,7 +249,7 @@ static int readH265Data(flvContext *context, uint8_t *data, uint32_t data_len){
     }
     return data_len;
 }
-int readVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len){
+int readVideoTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
     int frame_type = (data[0] & 0xf0) >> 4;
     int codec_id = data[0] & 0x0f;
     int ret = 0;
@@ -270,7 +270,7 @@ int readVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len){
     return ret > 0 ? data_len : 0;
 }
 
-int readScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len){
+int readScriptDataTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
     uint32_t data_used = 0;
     uint16_t str_len = 0;
     uint8_t *string = parseString(data, data_len, &data_used, &str_len);
@@ -296,7 +296,7 @@ int readScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len)
     return data_len;
 }
 
-void printTagHeader(tagHeader tag_header){
+void printTagHeader(TagHeader tag_header){
     printf("tag_type:%0x\n", tag_header.tag_type);
     switch (tag_header.flv_media_type)
     {
@@ -317,7 +317,7 @@ void printTagHeader(tagHeader tag_header){
     printf("stream_id:%d\n", tag_header.stream_id);
     printf("========================================\n");
 }
-int demuxerFLVFile(flvContext *context, char *intput){
+int demuxerFLVFile(FLVContext *context, char *intput){
     if(!context || !intput){
         return -1;
     }

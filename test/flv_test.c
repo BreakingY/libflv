@@ -9,11 +9,11 @@ char *aac_filename = "out.aac";
 FILE *aac_fd = NULL;
 char *h26x_filename = "out.h26x";
 FILE *h26x_fd = NULL;
-flvContext *context_demuxer;
+FLVContext *context_demuxer;
 #ifdef MUXER
 char *flv_filename = "out.flv";
 FILE *flv_fd = NULL;
-flvContext *context_muxer;
+FLVContext *context_muxer;
 int audio_ready = 0;
 int video_ready = 0;
 #endif

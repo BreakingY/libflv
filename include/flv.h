@@ -30,19 +30,19 @@ enum FLVWriteType{
     WRITE_FLV_VIDEO_TAG_DATA,
     WRITE_FLV_SCRIPT_TAG_DATA,
 };
-typedef struct flvHeaderSt{
+typedef struct FLVHeaderSt{
     int version;
     int have_audio; // 0 1
     int have_video; // 0 1
-}flvHeader;
+}FLVHeader;
 
-typedef struct tagHeaderSt{
+typedef struct TagHeaderSt{
     int tag_type; // 音频(0x08) 视频(0x09) script data(0x12)
     enum FLVMediaType flv_media_type;
     uint32_t data_size;
     uint32_t timestamp;
     int32_t stream_id;
-}tagHeader;
+}TagHeader;
 
 typedef void (*AudioCallBack)(enum FLVAudioType, int, int, int, int64_t, uint8_t*, uint32_t, void*);// AAC, profile, sample_rate_index, channel, timestamp, data, data_len, arg
 typedef void (*VideoCallBack)(enum FLVVideoType, int64_t, uint8_t*, uint32_t, void*); //H264/H265, timestamp, data, data_len, arg
@@ -50,15 +50,15 @@ typedef void (*ScriptDataCallBack)(AMFDict, void*);
 
 typedef void (*FLVWriteCallBack)(enum FLVWriteType, uint8_t*, uint32_t, void*); // type, data, data_len, arg
 
-typedef struct flvContextSt{
+typedef struct FLVContextSt{
     VideoCallBack video_cb;
     AudioCallBack audio_cb;
     FLVWriteCallBack write_cb;
     ScriptDataCallBack script_data_cb;
     void *arg;
 
-    flvHeader flv_header;
-    tagHeader tag_header;
+    FLVHeader flv_header;
+    TagHeader tag_header;
     // script
     AMFDict dict; // muxer only;
 
@@ -83,41 +83,41 @@ typedef struct flvContextSt{
     int video_config_ready;
 
     uint8_t buffer_context[1024 * 1024 * 2];
-}flvContext;
+}FLVContext;
 
-flvContext *createFLVContext();
+FLVContext *createFLVContext();
 
-void destroyFLVContext(flvContext *context);
+void destroyFLVContext(FLVContext *context);
 
 /**
  * demuxer API
  */
-void setReadCallBack(flvContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg); // demuxer only
-int demuxerFLVFile(flvContext *context, char *intput);
+void setReadCallBack(FLVContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg); // demuxer only
+int demuxerFLVFile(FLVContext *context, char *intput);
 
-int readFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len);
+int readFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len);
 int readPreviousTagSzie(uint8_t *data, uint32_t data_len);
-int readTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len);
+int readTagHeader(TagHeader *tag_header, uint8_t *data, uint32_t data_len);
 
 // can parse rtmp tag data
-int readAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len);
-int readVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len);
-int readScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len);
+int readAudioTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
+int readVideoTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
+int readScriptDataTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
 /**
  * muxer API
  */
-void setWriteCallBack(flvContext *context, FLVWriteCallBack write_cb, void *arg);
-void setAudioMediaType(flvContext *context, enum FLVAudioType audio_type);
-void setVideoMediaType(flvContext *context, enum FLVVideoType video_type);
+void setWriteCallBack(FLVContext *context, FLVWriteCallBack write_cb, void *arg);
+void setAudioMediaType(FLVContext *context, enum FLVAudioType audio_type);
+void setVideoMediaType(FLVContext *context, enum FLVVideoType video_type);
 
-int writeFLVGlobalHeader(flvContext *context, int have_video, int have_audio);
+int writeFLVGlobalHeader(FLVContext *context, int have_video, int have_audio);
 
-int writeAudioSpecificConfig(flvContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel);
-int writeAudioData(flvContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
+int writeAudioSpecificConfig(FLVContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel);
+int writeAudioData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
 
-int setVideoParameters(flvContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len); // 可多次调用，写入到flvContext中，H264 vps传入NULL
-int writeVideoSpecificConfig(flvContext *context, int64_t timestamp);
-int writeVideoData(flvContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
+int setVideoParameters(FLVContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len); // 可多次调用，写入到flvContext中，H264 vps传入NULL
+int writeVideoSpecificConfig(FLVContext *context, int64_t timestamp);
+int writeVideoData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
 
-int writeScriptData(flvContext *context, int64_t timestamp, AMFDict dict);
+int writeScriptData(FLVContext *context, int64_t timestamp, AMFDict dict);
 #endif
