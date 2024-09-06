@@ -4,17 +4,17 @@
 /**
  * muxer API
  */
-int writeFLVHeader(flvContext *context, uint8_t *data, uint32_t data_len, int have_video, int have_audio){
+int writeFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio){
     if(data_len < FLV_HEADER_SIZE){
-        return -1;
+        return 0;
     }
     memset(data, 0, FLV_HEADER_SIZE);
     memcpy(data, "FLV", 3);
     data[3] = FLV_VERSION;
-    if(context->flv_header.have_audio == 1){
+    if(flv_header->have_audio == 1){
         data[4] |= 0x04;
     }
-    if(context->flv_header.have_video == 1){
+    if(flv_header->have_video == 1){
         data[4] |= 0x01;
     }
     // DataOffset
@@ -24,9 +24,9 @@ int writeFLVHeader(flvContext *context, uint8_t *data, uint32_t data_len, int ha
     data[8] = FLV_HEADER_SIZE & 0xff;
     return FLV_HEADER_SIZE;
 }
-int writePreviousTagSzie(flvContext *context, uint8_t *data, uint32_t data_len, uint32_t previous_size){
+int writePreviousTagSzie(uint8_t *data, uint32_t data_len, uint32_t previous_size){
     if(data_len < FLV_PREVIOUS_SIZE){
-        return -1;
+        return 0;
     }
     memset(data, 0, FLV_PREVIOUS_SIZE);
     data[0] = previous_size >> 24;
@@ -35,12 +35,12 @@ int writePreviousTagSzie(flvContext *context, uint8_t *data, uint32_t data_len, 
     data[3] = previous_size & 0xff;
     return FLV_PREVIOUS_SIZE;
 }
-int writeTagHeader(flvContext *context, uint8_t *data, uint32_t data_len){
+int writeTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len){
     if(data_len < FLV_TAG_HEADER_SIZE){
-        return -1;
+        return 0;
     }
     memset(data, 0, FLV_TAG_HEADER_SIZE);
-    switch (context->tag_header.flv_media_type)
+    switch (tag_header->flv_media_type)
     {
     case FLV_AUDIO:
         data[0] = FLV_AUDIO_TAG_TYPE;
@@ -55,22 +55,22 @@ int writeTagHeader(flvContext *context, uint8_t *data, uint32_t data_len){
         break;
     }
     // data size
-    data[1] = context->tag_header.data_size >> 16;
-    data[2] = context->tag_header.data_size >> 8;
-    data[3] = context->tag_header.data_size & 0xff;
+    data[1] = tag_header->data_size >> 16;
+    data[2] = tag_header->data_size >> 8;
+    data[3] = tag_header->data_size & 0xff;
     // timestamp
-    data[4] = context->tag_header.timestamp >> 16;
-    data[5] = context->tag_header.timestamp >> 8;
-    data[6] = context->tag_header.timestamp & 0xff;
+    data[4] = tag_header->timestamp >> 16;
+    data[5] = tag_header->timestamp >> 8;
+    data[6] = tag_header->timestamp & 0xff;
     // timestamp extended
-    data[7] = context->tag_header.timestamp >> 24;
+    data[7] = tag_header->timestamp >> 24;
     // stream id
     memset(data + 7, 0, 3);
     return FLV_TAG_HEADER_SIZE;
 }
 static int writeAACConfig(flvContext *context, uint8_t *data, uint32_t data_len){
     if(data_len < 1 + 1 + 2){
-        return -1;
+        return 0;
     }
     if(context->audio_config_ready){
         return 0;
@@ -105,7 +105,7 @@ int writeAudioConfigTagData(flvContext *context, uint8_t *data, uint32_t data_le
 }
 static int writeAACData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len){
     if(data_len < 1 + 1 + audio_data_len){
-        return -1;
+        return 0;
     }
     memset(data, 0, data_len);
     int sound_fromat = FLV_AUDIO_CODEC_AAC;
@@ -132,7 +132,6 @@ int writeAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len, uin
     return ret;
 }
 static int h264WriteExtra(flvContext *context, uint8_t *data, uint32_t data_len){
- 
     uint8_t *extra_data_start = data;
     uint8_t *extra_data = data;
     extra_data[0] = 0x01;
@@ -286,6 +285,9 @@ int writeVideoConfigTagData(flvContext *context, uint8_t *data, uint32_t data_le
     return ret;
 }
 static int writeH264Data(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
+    if(data_len < 9 + video_data_len){
+        return 0;
+    }
     memset(data, 0, data_len);
     int pos = 0;
     int type = video_data[0] & 0x1f;
@@ -305,6 +307,9 @@ static int writeH264Data(flvContext *context, uint8_t *data, uint32_t data_len, 
     return pos;
 }
 static int writeH265Data(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *video_data, uint32_t video_data_len){
+    if(data_len < 9 + video_data_len){
+        return 0;
+    }
     memset(data, 0, data_len);
     int pos = 0;
     int type = (video_data[0] >> 3) & 0x1f;
@@ -349,15 +354,15 @@ int writeScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len
 
 // external API
 int writeFLVGlobalHeader(flvContext *context, int have_video, int have_audio){
-    int ret = writeFLVHeader(context, context->buffer_context, sizeof(context->buffer_context), have_video, have_audio);
+    int ret = writeFLVHeader(&context->flv_header, context->buffer_context, sizeof(context->buffer_context), have_video, have_audio);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_HEADER, context->buffer_context, FLV_HEADER_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_HEADER, context->buffer_context, ret, context->arg);
     }
-    ret = writePreviousTagSzie(context, context->buffer_context, sizeof(context->buffer_context), 0);
+    ret = writePreviousTagSzie(context->buffer_context, sizeof(context->buffer_context), 0);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, FLV_PREVIOUS_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }
 int writeAudioSpecificConfig(flvContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel){
     context->profile = profile;
@@ -370,16 +375,16 @@ int writeAudioSpecificConfig(flvContext *context, int64_t timestamp, int profile
     context->tag_header.data_size = ret;
     context->tag_header.timestamp = timestamp;
     context->tag_header.stream_id = 0;
-    ret = writeTagHeader(context, context->buffer_context, sizeof(context->buffer_context));
+    ret = writeTagHeader(&context->tag_header, context->buffer_context, sizeof(context->buffer_context));
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, FLV_TAG_HEADER_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, ret, context->arg);
         context->write_cb(WRITE_FLV_AUDIO_CONFIG_TAG_DATA, context->buffer_context + FLV_TAG_HEADER_SIZE, context->tag_header.data_size, context->arg);
     }
-    ret = writePreviousTagSzie(context, context->buffer_context, sizeof(context->buffer_context), FLV_TAG_HEADER_SIZE + context->tag_header.data_size);
+    ret = writePreviousTagSzie(context->buffer_context, sizeof(context->buffer_context), ret + context->tag_header.data_size);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, FLV_PREVIOUS_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }
 int writeAudioData(flvContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len){
     int ret = writeAudioTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE, data, data_len);
@@ -388,19 +393,19 @@ int writeAudioData(flvContext *context, int64_t timestamp, uint8_t *data, uint32
     context->tag_header.data_size = ret;
     context->tag_header.timestamp = timestamp;
     context->tag_header.stream_id = 0;
-    ret = writeTagHeader(context, context->buffer_context, sizeof(context->buffer_context));
+    ret = writeTagHeader(&context->tag_header, context->buffer_context, sizeof(context->buffer_context));
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, FLV_TAG_HEADER_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, ret, context->arg);
         context->write_cb(WRITE_FLV_AUDIO_TAG_DATA, context->buffer_context + FLV_TAG_HEADER_SIZE, context->tag_header.data_size, context->arg);
     }
-    ret = writePreviousTagSzie(context, context->buffer_context, sizeof(context->buffer_context), FLV_TAG_HEADER_SIZE + context->tag_header.data_size);
+    ret = writePreviousTagSzie(context->buffer_context, sizeof(context->buffer_context), ret + context->tag_header.data_size);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, FLV_PREVIOUS_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
     return ret >= 0 ? 0 : -1;
 }
 int setVideoParameters(flvContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len){
-    int ret = 0;
+    int ret = 1;
     if(vps){
         context->vps[context->vps_num] = (uint8_t*)malloc(vps_len);
         memcpy(context->vps[context->vps_num], vps, vps_len);
@@ -419,7 +424,7 @@ int setVideoParameters(flvContext *context, uint8_t *vps, uint32_t vps_len, uint
         context->pps_len[context->pps_num] = pps_len;
         context->pps_num++;
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }
 int writeVideoSpecificConfig(flvContext *context, int64_t timestamp){
     int ret = writeVideoConfigTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE);
@@ -428,16 +433,16 @@ int writeVideoSpecificConfig(flvContext *context, int64_t timestamp){
     context->tag_header.data_size = ret;
     context->tag_header.timestamp = timestamp;
     context->tag_header.stream_id = 0;
-    ret = writeTagHeader(context, context->buffer_context, sizeof(context->buffer_context));
+    ret = writeTagHeader(&context->tag_header, context->buffer_context, sizeof(context->buffer_context));
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, FLV_TAG_HEADER_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, ret, context->arg);
         context->write_cb(WRITE_FLV_VIDEO_CONFIG_TAG_DATA, context->buffer_context + FLV_TAG_HEADER_SIZE, context->tag_header.data_size, context->arg);
     }
-    ret = writePreviousTagSzie(context, context->buffer_context, sizeof(context->buffer_context), FLV_TAG_HEADER_SIZE + context->tag_header.data_size);
+    ret = writePreviousTagSzie(context->buffer_context, sizeof(context->buffer_context), ret + context->tag_header.data_size);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, FLV_PREVIOUS_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }
 int writeVideoData(flvContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len){
     int ret = writeVideoTagData(context, context->buffer_context + FLV_TAG_HEADER_SIZE, sizeof(context->buffer_context) - FLV_TAG_HEADER_SIZE, data, data_len);
@@ -446,16 +451,16 @@ int writeVideoData(flvContext *context, int64_t timestamp, uint8_t *data, uint32
     context->tag_header.data_size = ret;
     context->tag_header.timestamp = timestamp;
     context->tag_header.stream_id = 0;
-    ret = writeTagHeader(context, context->buffer_context, sizeof(context->buffer_context));
+    ret = writeTagHeader(&context->tag_header, context->buffer_context, sizeof(context->buffer_context));
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, FLV_TAG_HEADER_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, ret, context->arg);
         context->write_cb(WRITE_FLV_VIDEO_TAG_DATA, context->buffer_context + FLV_TAG_HEADER_SIZE, context->tag_header.data_size, context->arg);
     }
-    ret = writePreviousTagSzie(context, context->buffer_context, sizeof(context->buffer_context), FLV_TAG_HEADER_SIZE + context->tag_header.data_size);
+    ret = writePreviousTagSzie(context->buffer_context, sizeof(context->buffer_context), ret + context->tag_header.data_size);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, FLV_PREVIOUS_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }
 int writeScriptData(flvContext *context, int64_t timestamp, AMFDict dict){
     context->dict = dict;
@@ -465,14 +470,14 @@ int writeScriptData(flvContext *context, int64_t timestamp, AMFDict dict){
     context->tag_header.data_size = ret;
     context->tag_header.timestamp = timestamp;
     context->tag_header.stream_id = 0;
-    ret = writeTagHeader(context, context->buffer_context, sizeof(context->buffer_context));
+    ret = writeTagHeader(&context->tag_header, context->buffer_context, sizeof(context->buffer_context));
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, FLV_TAG_HEADER_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_TAG_HEADER, context->buffer_context, ret, context->arg);
         context->write_cb(WRITE_FLV_SCRIPT_TAG_DATA, context->buffer_context + FLV_TAG_HEADER_SIZE, context->tag_header.data_size, context->arg);
     }
-    ret = writePreviousTagSzie(context, context->buffer_context, sizeof(context->buffer_context), FLV_TAG_HEADER_SIZE + context->tag_header.data_size);
+    ret = writePreviousTagSzie(context->buffer_context, sizeof(context->buffer_context), ret + context->tag_header.data_size);
     if(context->write_cb){
-        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, FLV_PREVIOUS_SIZE, context->arg);
+        context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }

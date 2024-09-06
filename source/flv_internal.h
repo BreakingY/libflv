@@ -27,9 +27,9 @@
 
 
 // muxer
-int writeFLVHeader(flvContext *context, uint8_t *data, uint32_t data_len, int have_video, int have_audio);
-int writePreviousTagSzie(flvContext *context, uint8_t *data, uint32_t data_len, uint32_t previous_size);
-int writeTagHeader(flvContext *context, uint8_t *data, uint32_t data_len);
+int writeFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio);
+int writePreviousTagSzie(uint8_t *data, uint32_t data_len, uint32_t previous_size);
+int writeTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len);
 
 int writeAudioConfigTagData(flvContext *context, uint8_t *data, uint32_t data_len);
 int writeAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len, uint8_t *audio_data, uint32_t audio_data_len);

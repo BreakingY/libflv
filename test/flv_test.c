@@ -56,11 +56,18 @@ void audioCallBack(enum FLVAudioType type, int profile, int sample_rate_index, i
     fwrite(data, 1, data_len, aac_fd);
 #ifdef MUXER
     setAudioMediaType(context_muxer, FLV_AUDIO_AAC);
+    int ret;
     if(!audio_ready){
-        writeAudioSpecificConfig(context_muxer, timestamp, profile, sample_rate_index, channel);
+        ret = writeAudioSpecificConfig(context_muxer, timestamp, profile, sample_rate_index, channel);
+        if(ret < 0){
+            printf("writeAudioSpecificConfig error\n");
+        }
         audio_ready = 1;
     }
-    writeAudioData(context_muxer, timestamp, data, data_len);
+    ret = writeAudioData(context_muxer, timestamp, data, data_len);
+    if(ret < 0){
+        printf("writeAudioData error\n");
+    }
 #endif
     return;
 }
@@ -80,6 +87,7 @@ void videoCallBack(enum FLVVideoType type, int64_t timestamp, uint8_t* data, uin
     fwrite(start_code, 1, 4, h26x_fd);
     fwrite(data, 1, data_len, h26x_fd);
 #ifdef MUXER
+    int ret;
     if(!video_ready){
         if(type == FLV_VIDEO_H264){
             setVideoMediaType(context_muxer, FLV_VIDEO_H264);
@@ -89,7 +97,10 @@ void videoCallBack(enum FLVVideoType type, int64_t timestamp, uint8_t* data, uin
             if(nalu_type == 8){ // pps
                 setVideoParameters(context_muxer, NULL, 0, NULL, 0, data, data_len);
                 video_ready = 1;
-                writeVideoSpecificConfig(context_muxer, timestamp);
+                ret = writeVideoSpecificConfig(context_muxer, timestamp);
+                if(ret < 0){
+                    printf("writeVideoSpecificConfig error\n");
+                }
             }
         }
         else if(type == FLV_VIDEO_H265){
@@ -103,7 +114,10 @@ void videoCallBack(enum FLVVideoType type, int64_t timestamp, uint8_t* data, uin
             if(nalu_type == 34){ // pps
                 setVideoParameters(context_muxer, NULL, 0, NULL, 0, data, data_len);
                 video_ready = 1;
-                writeVideoSpecificConfig(context_muxer, timestamp);
+                ret = writeVideoSpecificConfig(context_muxer, timestamp);
+                if(ret < 0){
+                    printf("writeVideoSpecificConfig error\n");
+                }
             }
         } 
         
@@ -112,7 +126,10 @@ void videoCallBack(enum FLVVideoType type, int64_t timestamp, uint8_t* data, uin
         if(nalu_type == 6 || nalu_type == 7 || nalu_type == 8 || nalu_type == 32 || nalu_type == 33 || nalu_type == 34){
             return;
         }
-        writeVideoData(context_muxer, timestamp, data, data_len);
+        ret = writeVideoData(context_muxer, timestamp, data, data_len);
+        if(ret < 0){
+            printf("writeVideoData error\n");
+        }
     }
 #endif
     return; 
@@ -126,28 +143,28 @@ void WriteCallBack(enum FLVWriteType type, uint8_t* data, uint32_t data_len, voi
     switch (type)
     {
         case WRITE_FLV_HEADER:
-            printf("WRITE_FLV_HEADER\n");
+            // printf("WRITE_FLV_HEADER\n");
             break;
         case WRITE_FLV_PREVIOUS_SIZE:
-            printf("WRITE_FLV_PREVIOUS_SIZE\n");
+            // printf("WRITE_FLV_PREVIOUS_SIZE\n");
             break;
         case WRITE_FLV_TAG_HEADER:
-            printf("WRITE_FLV_TAG_HEADER\n");
+            // printf("WRITE_FLV_TAG_HEADER\n");
             break;
         case WRITE_FLV_AUDIO_CONFIG_TAG_DATA: // can used by rtmp
-            printf("WRITE_FLV_AUDIO_CONFIG_TAG_DATA\n");
+            // printf("WRITE_FLV_AUDIO_CONFIG_TAG_DATA\n");
             break;
         case WRITE_FLV_AUDIO_TAG_DATA: // can used by rtmp
-            printf("WRITE_FLV_AUDIO_TAG_DATA\n");
+            // printf("WRITE_FLV_AUDIO_TAG_DATA\n");
             break;
         case WRITE_FLV_VIDEO_CONFIG_TAG_DATA: // can used by rtmp
-            printf("WRITE_FLV_VIDEO_CONFIG_TAG_DATA\n");
+            // printf("WRITE_FLV_VIDEO_CONFIG_TAG_DATA\n");
             break;
         case WRITE_FLV_VIDEO_TAG_DATA: // can used by rtmp
-            printf("WRITE_FLV_VIDEO_TAG_DATA\n");
+            // printf("WRITE_FLV_VIDEO_TAG_DATA\n");
             break;
         case WRITE_FLV_SCRIPT_TAG_DATA: // can used by rtmp
-            printf("WRITE_FLV_SCRIPT_TAG_DATA\n");
+            // printf("WRITE_FLV_SCRIPT_TAG_DATA\n");
             break;
         default:
             break;
@@ -180,7 +197,10 @@ int main(int argc, char **argv){
     setAMFDict(&dict, AMFSTRING, "compatible_brands", strlen("compatible_brands"), 0, 0, "isomiso2avc1mp41", NULL, strlen("isomiso2avc1mp41"));
     setAMFDict(&dict, AMFNUMBER, "user", strlen("user"), 15.0, 0, NULL, NULL, 0);
     printAMFDict(dict);
-    writeScriptData(context_muxer, 0, dict);
+    int ret = writeScriptData(context_muxer, 0, dict);
+    if(ret < 0){
+        printf("writeScriptData error\n");
+    }
 #endif
     demuxerFLVFile(context_demuxer, input);
     destroyFLVContext(context_demuxer);

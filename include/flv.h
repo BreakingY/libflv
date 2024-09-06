@@ -95,9 +95,9 @@ void destroyFLVContext(flvContext *context);
 void setReadCallBack(flvContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg); // demuxer only
 int demuxerFLVFile(flvContext *context, char *intput);
 
-int readFLVHeader(flvContext *context, uint8_t *data, uint32_t data_len);
-int readPreviousTagSzie(flvContext *context, uint8_t *data, uint32_t data_len);
-int readTagHeader(flvContext *context, uint8_t *data, uint32_t data_len);
+int readFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len);
+int readPreviousTagSzie(uint8_t *data, uint32_t data_len);
+int readTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len);
 
 // can parse rtmp tag data
 int readAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len);

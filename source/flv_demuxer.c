@@ -5,50 +5,50 @@
 /**
  * demuxer API
  */
-int readFLVHeader(flvContext *context, uint8_t *data, uint32_t data_len){
+int readFLVHeader(flvHeader *flv_header, uint8_t *data, uint32_t data_len){
     if(data_len < FLV_HEADER_SIZE){
-        return -1;
+        return 0;
     }
     if(memcmp(data, "FLV", 3) != 0){
         printf("error , make sure file is FLV\n");
         exit(0);
     }
-    context->flv_header.have_audio = 0;
-    context->flv_header.have_video = 0;
-    context->flv_header.version = data[3];
-    context->flv_header.have_audio = (data[4] & 0x04) >> 2;
-    context->flv_header.have_audio = data[4] & 0x01;
+    flv_header->have_audio = 0;
+    flv_header->have_video = 0;
+    flv_header->version = data[3];
+    flv_header->have_audio = (data[4] & 0x04) >> 2;
+    flv_header->have_audio = data[4] & 0x01;
     return FLV_HEADER_SIZE;
 }
-int readPreviousTagSzie(flvContext *context, uint8_t *data, uint32_t data_len){
+int readPreviousTagSzie(uint8_t *data, uint32_t data_len){
     if(data_len < FLV_PREVIOUS_SIZE){
-        return -1;
+        return 0;
     }
     return FLV_PREVIOUS_SIZE;
 }
-int readTagHeader(flvContext *context, uint8_t *data, uint32_t data_len){
+int readTagHeader(tagHeader *tag_header, uint8_t *data, uint32_t data_len){
     if(data_len < FLV_TAG_HEADER_SIZE){
-        return -1;
+        return 0;
     }
-    context->tag_header.tag_type = data[0];
-    switch (context->tag_header.tag_type)
+    tag_header->tag_type = data[0];
+    switch (tag_header->tag_type)
     {
         case FLV_AUDIO_TAG_TYPE:
-            context->tag_header.flv_media_type = FLV_AUDIO;
+            tag_header->flv_media_type = FLV_AUDIO;
             break;
         case FLV_VIDEO_TAG_TYPE:
-            context->tag_header.flv_media_type = FLV_VIDEO;
+            tag_header->flv_media_type = FLV_VIDEO;
             break;
         case FLV_SCRIPT_DATA_TAG_TYPE:
-            context->tag_header.flv_media_type = FLV_SCRIPT_DATA;
+            tag_header->flv_media_type = FLV_SCRIPT_DATA;
             break;
         default:
             break;
     }
-    context->tag_header.data_size = (data[1] << 16) | (data[2] << 8) | data[3];
+    tag_header->data_size = (data[1] << 16) | (data[2] << 8) | data[3];
     uint32_t ts = (data[4] << 16) | (data[5] << 8) | data[6];
-    context->tag_header.timestamp = (data[7] << 24) | ts;
-    context->tag_header.stream_id = (data[8] << 16) | (data[9] << 8) | data[10]; // always 0
+    tag_header->timestamp = (data[7] << 24) | ts;
+    tag_header->stream_id = (data[8] << 16) | (data[9] << 8) | data[10]; // always 0
     return FLV_TAG_HEADER_SIZE;
 }
 static int readAACData(flvContext *context, uint8_t *data, uint32_t data_len){
@@ -71,9 +71,6 @@ static int readAACData(flvContext *context, uint8_t *data, uint32_t data_len){
     return data_len;
 }
 int readAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len){
-    if(data_len < 1){
-        return -1;
-    }
     int sound_fromat = (data[0] & 0xf0) >> 4;
     int sound_rate = (data[0] & 0x0c) >> 2;
     int sound_size = (data[0] & 0x02) >> 1;
@@ -89,7 +86,7 @@ int readAudioTagData(flvContext *context, uint8_t *data, uint32_t data_len){
             context->audio_type = FLV_AUDIO_NONE;
             break;
     }
-    return ret > 0 ? data_len : ret;
+    return ret > 0 ? data_len : 0;
 }
 
 static int readH264Data(flvContext *context, uint8_t *data, uint32_t data_len){
@@ -270,7 +267,7 @@ int readVideoTagData(flvContext *context, uint8_t *data, uint32_t data_len){
             context->video_type = FLV_VIDEO_NONE;
             break;
     }
-    return ret > 0 ? data_len : ret;
+    return ret > 0 ? data_len : 0;
 }
 
 int readScriptDataTagData(flvContext *context, uint8_t *data, uint32_t data_len){
@@ -331,17 +328,17 @@ int demuxerFLVFile(flvContext *context, char *intput){
     uint8_t buffer[1024 * 1024 * 4];
     // flv header
     int ret = fread(buffer, 1, FLV_HEADER_SIZE, fp);
-    int handle_bytes = readFLVHeader(context, buffer, ret);
+    int handle_bytes = readFLVHeader(&context->flv_header, buffer, ret);
     assert(handle_bytes == FLV_HEADER_SIZE);
     assert(context->flv_header.version == FLV_VERSION);
     // previous size
     ret = fread(buffer, 1, FLV_PREVIOUS_SIZE, fp);
-    handle_bytes = readPreviousTagSzie(context, buffer, FLV_PREVIOUS_SIZE);
+    handle_bytes = readPreviousTagSzie(buffer, FLV_PREVIOUS_SIZE);
     assert(handle_bytes == FLV_PREVIOUS_SIZE);
     while(1){
         // tag header
         ret = fread(buffer, 1, FLV_TAG_HEADER_SIZE, fp);
-        handle_bytes = readTagHeader(context, buffer, FLV_TAG_HEADER_SIZE);
+        handle_bytes = readTagHeader(&context->tag_header, buffer, FLV_TAG_HEADER_SIZE);
         assert(handle_bytes == FLV_TAG_HEADER_SIZE);
         // printTagHeader(context->tag_header);
         
@@ -367,7 +364,7 @@ int demuxerFLVFile(flvContext *context, char *intput){
 
         // previous size
         ret = fread(buffer, 1, FLV_PREVIOUS_SIZE, fp);
-        handle_bytes = readPreviousTagSzie(context, buffer, FLV_PREVIOUS_SIZE);
+        handle_bytes = readPreviousTagSzie(buffer, FLV_PREVIOUS_SIZE);
         assert(handle_bytes == FLV_PREVIOUS_SIZE);
         if(ftell(fp) == bytes){
             break;
