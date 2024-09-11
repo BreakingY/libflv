@@ -371,4 +371,5 @@ int demuxerFLVFile(FLVContext *context, char *intput){
         }
     }
     fclose(fp);
+    return 0;
 }
