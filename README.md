@@ -1,6 +1,6 @@
 # libflv
 flv muxer/demuxer，support H264/H265、AAC。
-# 编译(Linux/Windows)
+# 编译
 * mkdir build
 * cd build
 * cmake ..
