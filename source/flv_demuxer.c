@@ -82,7 +82,7 @@ int readAudioTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
             context->audio_type = FLV_AUDIO_AAC;
             ret = readAACData(context, data + 1, data_len - 1);
             break;
-        default: // 暂不支持其他格式
+        default:
             context->audio_type = FLV_AUDIO_NONE;
             break;
     }
@@ -102,7 +102,7 @@ static int readH264Data(FLVContext *context, uint8_t *data, uint32_t data_len){
         payload += 5;
         payload_len -= 5;
         // sps
-        int sps_num = payload[0] & 0x1f; // sps_num只占5位
+        int sps_num = payload[0] & 0x1f;
         payload += 1;
         for(int i = 0; i < sps_num; i++){
             uint16_t sps_len = payload[0] << 8 | payload[1];
@@ -113,7 +113,7 @@ static int readH264Data(FLVContext *context, uint8_t *data, uint32_t data_len){
             payload += 2 + sps_len;
         }
         // pps
-        int pps_num = payload[0]; // pps_num占8位，和sps不一样
+        int pps_num = payload[0];
         payload += 1;
         for(int i = 0; i < pps_num; i++){
             uint16_t pps_len = payload[0] << 8 | payload[1];
@@ -263,7 +263,7 @@ int readVideoTagData(FLVContext *context, uint8_t *data, uint32_t data_len){
             context->video_type = FLV_VIDEO_H265;
             ret = readH265Data(context, data + 1, data_len - 1);
             break;
-        default: // 暂不支持其他格式
+        default:
             context->video_type = FLV_VIDEO_NONE;
             break;
     }

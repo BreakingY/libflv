@@ -402,7 +402,7 @@ int writeAudioData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32
     if(context->write_cb){
         context->write_cb(WRITE_FLV_PREVIOUS_SIZE, context->buffer_context, ret, context->arg);
     }
-    return ret >= 0 ? 0 : -1;
+    return ret > 0 ? 0 : -1;
 }
 int setVideoParameters(FLVContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len){
     int ret = 1;

@@ -37,7 +37,7 @@ typedef struct FLVHeaderSt{
 }FLVHeader;
 
 typedef struct TagHeaderSt{
-    int tag_type; // 音频(0x08) 视频(0x09) script data(0x12)
+    int tag_type; // audio(0x08) video(0x09) script data(0x12)
     enum FLVMediaType flv_media_type;
     uint32_t data_size;
     uint32_t timestamp;
@@ -86,38 +86,126 @@ typedef struct FLVContextSt{
 }FLVContext;
 
 FLVContext *createFLVContext();
-
 void destroyFLVContext(FLVContext *context);
 
 /**
  * demuxer API
  */
-void setReadCallBack(FLVContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg); // demuxer only
+/**
+ * set read callback
+ * @param[in] context           create by createFLVContext()
+ * @param[in] audio_cb          audio callback
+ * @param[in] video_cb          video callback
+ * @param[in] script_data_cb    script data callback
+ * @param[in] arg               user arg
+ */
+void setReadCallBack(FLVContext *context, AudioCallBack audio_cb, VideoCallBack video_cb, ScriptDataCallBack script_data_cb, void *arg);
+/**
+ * analyze flv file, use readFLVHeader, readPreviousTagSzie, readTagHeader, readAudioTagData, readVideoTagData, readScriptDataTagData
+ * @param[in] context   create by createFLVContext()
+ * @param[in] intput    flv file path
+ * @return              0:ok -1:error
+ */
 int demuxerFLVFile(FLVContext *context, char *intput);
 
+// return bytes
 int readFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len);
+// return bytes
 int readPreviousTagSzie(uint8_t *data, uint32_t data_len);
+// return bytes
 int readTagHeader(TagHeader *tag_header, uint8_t *data, uint32_t data_len);
 
-// can parse rtmp tag data
+// The following function can parse rtmp tag data
+// return bytes
 int readAudioTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
+// return bytes
 int readVideoTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
+// return bytes
 int readScriptDataTagData(FLVContext *context, uint8_t *data, uint32_t data_len);
 /**
  * muxer API
  */
+/**
+ * set write callback
+ * @param[in] context           create by createFLVContext()
+ * @param[in] write_cb          write callback
+ * @param[in] arg               user arg
+ */
 void setWriteCallBack(FLVContext *context, FLVWriteCallBack write_cb, void *arg);
+/**
+ * set audio type, if have
+ * @param[in] context           create by createFLVContext()
+ * @param[in] audio_type        audio typpe
+ */
 void setAudioMediaType(FLVContext *context, enum FLVAudioType audio_type);
+/**
+ * set video type, if have
+ * @param[in] context           create by createFLVContext()
+ * @param[in] video_type        video typpe
+ */
 void setVideoMediaType(FLVContext *context, enum FLVVideoType video_type);
 
+/**
+ * write FLV global header
+ * @param[in] context       create by createFLVContext()
+ * @param[in] have_video    1: have video 0: have not video
+ * @param[in] have_audio    1: have audio 0: have not audio
+ * @return                  0:ok -1:error
+ */
 int writeFLVGlobalHeader(FLVContext *context, int have_video, int have_audio);
-
-int writeAudioSpecificConfig(FLVContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel);
-int writeAudioData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
-
-int setVideoParameters(FLVContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len); // 可多次调用，写入到flvContext中，H264 vps传入NULL
-int writeVideoSpecificConfig(FLVContext *context, int64_t timestamp);
-int writeVideoData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
-
+/**
+ * write script data
+ * @param[in] context   create by createFLVContext()
+ * @param[in] timestamp can ignore
+ * @param[in] dict      amf0.h setAMFDict
+ * @return              0:ok -1:error
+ */
 int writeScriptData(FLVContext *context, int64_t timestamp, AMFDict dict);
+/**
+ * write audio specific config
+ * @param[in] context           create by createFLVContext()
+ * @param[in] timestamp         can ignore
+ * @param[in] profile           audio profile
+ * @param[in] sample_rate_index audio sample_rate_index
+ * @param[in] channel           audio channel num
+ * @return                      0:ok -1:error
+ */
+int writeAudioSpecificConfig(FLVContext *context, int64_t timestamp, int profile, int sample_rate_index, int channel);
+/**
+ * write audio data
+ * @param[in] context   create by createFLVContext()
+ * @param[in] timestamp audio timestamp
+ * @param[in] data      audio frame
+ * @param[in] data_len  audio frame len
+ * @return              0:ok -1:error
+ */
+int writeAudioData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
+/**
+ * set video parameters, vps/sps/pps can be called multiple times and passed in
+ * @param[in] context   create by createFLVContext()
+ * @param[in] vps       H265 vps
+ * @param[in] vps_len   vps len
+ * @param[in] sps       H264/H265 sps
+ * @param[in] sps_len   sps len
+ * @param[in] pps       H264/H265 pps
+ * @param[in] pps_len   pps len
+ * @return              0:ok -1:error
+ */
+int setVideoParameters(FLVContext *context, uint8_t *vps, uint32_t vps_len, uint8_t *sps, uint32_t sps_len, uint8_t *pps, uint32_t pps_len);
+/**
+ * write video specific config
+ * @param[in] context           create by createFLVContext()
+ * @param[in] timestamp         can ignore
+ * @return                      0:ok -1:error
+ */
+int writeVideoSpecificConfig(FLVContext *context, int64_t timestamp);
+/**
+ * write video data
+ * @param[in] context   create by createFLVContext()
+ * @param[in] timestamp video timestamp
+ * @param[in] data      video frame
+ * @param[in] data_len  video frame len
+ * @return              0:ok -1:error
+ */
+int writeVideoData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
 #endif

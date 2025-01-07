@@ -39,6 +39,10 @@ typedef struct AMFDictSt{
     KV key_value[1024];
     uint32_t key_value_len;
 }AMFDict;
+/**
+ * analyze amf0
+ * return element
+ */
 double parseNumber(uint8_t *data, uint32_t data_len, uint32_t *data_used);
 int parseBoolean(uint8_t *data, uint32_t data_len, uint32_t *data_used);
 uint8_t* parseString(uint8_t *data, uint32_t data_len, uint32_t *data_used, uint16_t *str_len);
@@ -47,6 +51,10 @@ AMFDict parseObject(uint8_t *data, uint32_t data_len, uint32_t *data_used);
 AMFDict parseMixedArray(uint8_t *data, uint32_t data_len, uint32_t *data_used);
 void printAMFDict(AMFDict dict);
 
+/**
+ * generate amf0
+ * return bytes
+ */
 int generateNumber(double number, uint8_t *data, uint32_t data_len);
 int generaBoolean(int boolean, uint8_t *data, uint32_t data_len);
 int generaString(uint8_t *str, uint16_t str_len, uint8_t *data, uint16_t data_len);
@@ -54,6 +62,9 @@ int generaLongString(uint8_t *str, uint32_t str_len, uint8_t *data, uint32_t dat
 int generateObject(AMFDict dict, uint8_t *data, uint32_t data_len);
 int generateMixedArray(AMFDict dict, uint8_t *data, uint32_t data_len);
 
+/**
+ * generate dict(flv script data)
+ */
 void setAMFDict(AMFDict *dict, int type, uint8_t *key, uint16_t key_len, double number, int boolean, char *str, char *long_str, uint32_t str_len);
 
 #endif
