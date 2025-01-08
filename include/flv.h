@@ -45,7 +45,7 @@ typedef struct TagHeaderSt{
 }TagHeader;
 
 typedef void (*AudioCallBack)(enum FLVAudioType, int, int, int, int64_t, uint8_t*, uint32_t, void*);// AAC, profile, sample_rate_index, channel, timestamp, data, data_len, arg
-typedef void (*VideoCallBack)(enum FLVVideoType, int64_t, uint8_t*, uint32_t, void*); //H264/H265, timestamp, data, data_len, arg
+typedef void (*VideoCallBack)(enum FLVVideoType, int64_t, uint8_t*, uint32_t, void*); //H264/H265, timestamp, data(without start code), data_len, arg
 typedef void (*ScriptDataCallBack)(AMFDict, void*);
 
 typedef void (*FLVWriteCallBack)(enum FLVWriteType, uint8_t*, uint32_t, void*); // type, data, data_len, arg
@@ -181,7 +181,7 @@ int writeAudioSpecificConfig(FLVContext *context, int64_t timestamp, int profile
  */
 int writeAudioData(FLVContext *context, int64_t timestamp, uint8_t *data, uint32_t data_len);
 /**
- * set video parameters, vps/sps/pps can be called multiple times and passed in
+ * set video parameters, vps/sps/pps can be called multiple times and passed in, without start code 
  * @param[in] context   create by createFLVContext()
  * @param[in] vps       H265 vps
  * @param[in] vps_len   vps len
@@ -203,7 +203,7 @@ int writeVideoSpecificConfig(FLVContext *context, int64_t timestamp);
  * write video data
  * @param[in] context   create by createFLVContext()
  * @param[in] timestamp video timestamp
- * @param[in] data      video frame
+ * @param[in] data      video frame, without start code 
  * @param[in] data_len  video frame len
  * @return              0:ok -1:error
  */
