@@ -335,7 +335,7 @@ int demuxerFLVFile(FLVContext *context, char *intput){
     ret = fread(buffer, 1, FLV_PREVIOUS_SIZE, fp);
     handle_bytes = readPreviousTagSzie(buffer, FLV_PREVIOUS_SIZE);
     assert(handle_bytes == FLV_PREVIOUS_SIZE);
-    while(1){
+    while(context->demuxer_flag == 0){
         // tag header
         ret = fread(buffer, 1, FLV_TAG_HEADER_SIZE, fp);
         handle_bytes = readTagHeader(&context->tag_header, buffer, FLV_TAG_HEADER_SIZE);
@@ -372,4 +372,9 @@ int demuxerFLVFile(FLVContext *context, char *intput){
     }
     fclose(fp);
     return 0;
+}
+void terminateDemuxerFLVFile(FLVContext *context){
+    if(context){
+        context->demuxer_flag = 1;
+    }
 }

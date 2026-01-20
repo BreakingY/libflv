@@ -53,8 +53,10 @@ typedef void (*FLVWriteCallBack)(enum FLVWriteType, uint8_t*, uint32_t, void*); 
 typedef struct FLVContextSt{
     VideoCallBack video_cb;
     AudioCallBack audio_cb;
-    FLVWriteCallBack write_cb;
     ScriptDataCallBack script_data_cb;
+    int demuxer_flag;
+    FLVWriteCallBack write_cb;
+
     void *arg;
 
     FLVHeader flv_header;
@@ -107,6 +109,11 @@ void setReadCallBack(FLVContext *context, AudioCallBack audio_cb, VideoCallBack 
  * @return              0:ok -1:error
  */
 int demuxerFLVFile(FLVContext *context, char *intput);
+/**
+ * Terminate  analyze flv file
+ * @param[in] context   create by createFLVContext()
+ */
+void terminateDemuxerFLVFile(FLVContext *context);
 
 // return bytes
 int readFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len);
