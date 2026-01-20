@@ -65,7 +65,7 @@ int writeTagHeader(TagHeader *tag_header, uint8_t *data, uint32_t data_len){
     // timestamp extended
     data[7] = tag_header->timestamp >> 24;
     // stream id
-    memset(data + 7, 0, 3);
+    memset(data + 8, 0, 3);
     return FLV_TAG_HEADER_SIZE;
 }
 static int writeAACConfig(FLVContext *context, uint8_t *data, uint32_t data_len){
@@ -312,7 +312,7 @@ static int writeH265Data(FLVContext *context, uint8_t *data, uint32_t data_len, 
     }
     memset(data, 0, data_len);
     int pos = 0;
-    int type = (video_data[0] >> 3) & 0x1f;
+    int type = (video_data[0] >> 1) & 0x3f;
     data[pos++] = (type == 19 ? 0x1c : 0x2c);
     data[pos++] = 1;
     // composition time
