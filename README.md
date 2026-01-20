@@ -1,5 +1,5 @@
 # libflv
-flv muxer/demuxer, support H264/H265/AAC.
+flv rtmp-flv muxer/demuxer, support H264/H265/AAC.
 # compile
 * mkdir build
 * cd build
