@@ -4,28 +4,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define FLV_HEADER_SIZE 9
-#define FLV_VERSION 0x01
-#define FLV_PREVIOUS_SIZE 4
-#define FLV_TAG_HEADER_SIZE 11
-
-#define FLV_AUDIO_TAG_TYPE 0x08
-#define FLV_VIDEO_TAG_TYPE 0x09
-#define FLV_SCRIPT_DATA_TAG_TYPE 0x12
-
-#define FLV_AUDIO_CODEC_MP3 2
-#define FLV_AUDIO_CODEC_G711A 7
-#define FLV_AUDIO_CODEC_G711U 8
-#define FLV_AUDIO_CODEC_AAC 10
-#define FLV_AUDIO_CODEC_SPEEX 11
-#define FLV_AUDIO_CODEC_MP3_8KHZ 14
-
-#define FLV_VIDEO_CODEC_AVC 7
-#define FLV_VIDEO_CODEC_H264 FLV_VIDEO_CODEC_AVC
-#define FLV_VIDEO_CODEC_HEVC 12
-#define FLV_VIDEO_CODEC_H265 FLV_VIDEO_CODEC_HEVC
-
-
 // return bytes
 int writeFLVHeader(FLVHeader *flv_header, uint8_t *data, uint32_t data_len, int have_video, int have_audio);
 // return bytes
