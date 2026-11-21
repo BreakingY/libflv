@@ -97,34 +97,40 @@ AMFDict parseObject(uint8_t *data, uint32_t data_len, uint32_t *data_used){
     return amf_dict;
 }
 AMFDict parseMixedArray(uint8_t *data, uint32_t data_len, uint32_t *data_used){
-    int type = data[0];
     AMFDict amf_dict;
     amf_dict.key_value_len = 0;
-    if(type != AMFMIXEDARRAY){
-        return amf_dict;
+    if (data_used) {
+        *data_used = 0;
     }
     if (!data || data_len < 5) {
         return amf_dict;
     }
 
-    int pos = 1;
+    int type = data[0];
+    if (type != AMFMIXEDARRAY) {
+        return amf_dict;
+    }
+
+    uint32_t pos = 1;
     uint32_t array_num = ((uint32_t)data[pos] << 24) |
                          ((uint32_t)data[pos + 1] << 16) |
                          ((uint32_t)data[pos + 2] << 8) |
                          (uint32_t)data[pos + 3];
     pos += 4;
 
+    uint32_t max_entries = (uint32_t)(sizeof(amf_dict.key_value) / sizeof(amf_dict.key_value[0]));
+
     for (uint32_t i = 0; i < array_num; i++) {
-     
-        if (amf_dict.key_value_len >= 1024 || (uint32_t)pos + 3 > data_len) {
+        if (amf_dict.key_value_len >= max_entries || pos + 3 > data_len) {
+            pos = data_len;
             break;
         }
 
         uint16_t key_len = (uint16_t)(((uint16_t)data[pos] << 8) | (uint16_t)data[pos + 1]);
         pos += 2;
 
-   
-        if ((uint32_t)key_len + 1 > data_len - (uint32_t)pos) {
+        if ((uint32_t)key_len + 1 > data_len - pos) {
+            pos = data_len;
             break;
         }
 
@@ -133,38 +139,47 @@ AMFDict parseMixedArray(uint8_t *data, uint32_t data_len, uint32_t *data_used){
         k_v->key_len = key_len;
         pos += key_len;
 
-        int type_value = data[pos]; 
+        uint32_t data_used_tmp = 0;
+        uint16_t str_len = 0;
+        uint8_t type_value = data[pos];
 
-        switch (type_value)
-        {
+        switch (type_value) {
             case AMFNUMBER:
                 k_v->value_type = AMFNUMBER;
                 k_v->value.number = parseNumber(data + pos, data_len - pos, &data_used_tmp);
-                pos += data_used_tmp;
                 break;
             case AMFBOOLEAN:
                 k_v->value_type = AMFBOOLEAN;
                 k_v->value.boolean = parseBoolean(data + pos, data_len - pos, &data_used_tmp);
-                pos += data_used_tmp;
                 break;
             case AMFSTRING:
                 k_v->value_type = AMFSTRING;
-                k_v->value.str = parseString(data + pos, data_len - pos, &data_used_tmp, &str_len);
+                k_v->value.str = (char *)parseString(data + pos, data_len - pos, &data_used_tmp, &str_len);
                 k_v->str_len = str_len;
-                pos += data_used_tmp;
                 break;
             case AMFLONGSTRING:
                 k_v->value_type = AMFLONGSTRING;
-                k_v->value.long_str = parseLongString(data + pos, data_len - pos, &data_used_tmp, &k_v->str_len);
-                pos += data_used_tmp;
+                k_v->value.long_str = (char *)parseLongString(data + pos, data_len - pos, &data_used_tmp, &k_v->str_len);
                 break;
             default:
-                break;
+                pos = data_len;
+                goto done;
         }
+
+        if (data_used_tmp == 0 || data_used_tmp > data_len - pos) {
+            pos = data_len;
+            break;
+        }
+        pos += data_used_tmp;
     }
-    *data_used = pos + 3; // AMFENDOFOBJECT
+
+done:
+    if (data_used) {
+        *data_used = (pos + 3 <= data_len) ? (pos + 3) : data_len;
+    }
     return amf_dict;
 }
+
 void printAMFDict(AMFDict dict){
     for(int i = 0; i < dict.key_value_len; i++){
         KV *k_v = &dict.key_value[i];
