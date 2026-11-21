@@ -103,17 +103,38 @@ AMFDict parseMixedArray(uint8_t *data, uint32_t data_len, uint32_t *data_used){
     if(type != AMFMIXEDARRAY){
         return amf_dict;
     }
+    if (!data || data_len < 5) {
+        return amf_dict;
+    }
+
     int pos = 1;
-    int array_num = (data[pos++] << 24) | (data[pos++] << 16) | (data[pos++] << 8) | data[pos++];
-    for(int i = 0; i < array_num; i++){
-        uint32_t data_used_tmp;
-        uint16_t str_len;
-        uint16_t key_len = (data[pos++] << 8) | data[pos++];
+    uint32_t array_num = ((uint32_t)data[pos] << 24) |
+                         ((uint32_t)data[pos + 1] << 16) |
+                         ((uint32_t)data[pos + 2] << 8) |
+                         (uint32_t)data[pos + 3];
+    pos += 4;
+
+    for (uint32_t i = 0; i < array_num; i++) {
+     
+        if (amf_dict.key_value_len >= 1024 || (uint32_t)pos + 3 > data_len) {
+            break;
+        }
+
+        uint16_t key_len = (uint16_t)(((uint16_t)data[pos] << 8) | (uint16_t)data[pos + 1]);
+        pos += 2;
+
+   
+        if ((uint32_t)key_len + 1 > data_len - (uint32_t)pos) {
+            break;
+        }
+
         KV *k_v = &amf_dict.key_value[amf_dict.key_value_len++];
         k_v->key = &data[pos];
         k_v->key_len = key_len;
         pos += key_len;
-        int type_value = data[pos];
+
+        int type_value = data[pos]; 
+
         switch (type_value)
         {
             case AMFNUMBER:
